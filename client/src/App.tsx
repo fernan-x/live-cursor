@@ -1,9 +1,30 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import './App.css'
+import { useState, useEffect } from "react";
+import reactLogo from "./assets/react.svg";
+import io from "socket.io-client";
+import "./App.css";
+
+const socket = io("http://localhost:3001");
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
+  const [isConnected, setIsConnected] = useState(socket.connected);
+
+  useEffect(() => {
+    socket.on("connect", () => {
+      console.log("connected");
+      setIsConnected(true);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("disconnected");
+      setIsConnected(false);
+    });
+
+    return () => {
+      socket.off("connect");
+      socket.off("disconnect");
+    };
+  }, []);
 
   return (
     <div className="App">
@@ -26,9 +47,11 @@ function App() {
       </div>
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
+        <br />
+        {isConnected ? "🟢 Connected" : "🔴 Not connected"}
       </p>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
