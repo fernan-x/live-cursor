@@ -1,13 +1,17 @@
 import { useState, useEffect } from "react";
+import useMousePosition from "./hooks/useMousePosition";
 import reactLogo from "./assets/react.svg";
 import io from "socket.io-client";
 import "./App.css";
+import { CursorPosition } from "./types/types";
 
 const socket = io("http://localhost:3001");
 
 function App() {
+  let requestTimeout: number | undefined = undefined;
   const [count, setCount] = useState(0);
   const [isConnected, setIsConnected] = useState(socket.connected);
+  const [ref, mousePosition] = useMousePosition();
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -20,14 +24,40 @@ function App() {
       setIsConnected(false);
     });
 
+    socket.on("update-mouse-position", (position) => {
+      console.log("Receive position from :");
+      console.log(position);
+    });
+
     return () => {
       socket.off("connect");
       socket.off("disconnect");
+      socket.off("update-mouse-position");
     };
   }, []);
 
+  /**
+   * Send the socket event to move mouse
+   *
+   * @param {CursorPosition}  mousePosition     Mouse position
+   */
+  const emitCursorPosition = (mousePosition: CursorPosition): void => {
+    socket.emit("mouse-move", mousePosition);
+  };
+
+  useEffect(() => {
+    requestTimeout = setTimeout(() => {
+      console.log(
+        `Emit position => left : ${mousePosition.left}, top : ${mousePosition.top}`
+      );
+      emitCursorPosition(mousePosition);
+    }, 300);
+
+    return () => clearTimeout(requestTimeout);
+  }, [mousePosition]);
+
   return (
-    <div className="App">
+    <div className="App" ref={ref}>
       <div>
         <a href="https://vitejs.dev" target="_blank">
           <img src="/vite.svg" className="logo" alt="Vite logo" />

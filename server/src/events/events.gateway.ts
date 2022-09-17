@@ -4,6 +4,7 @@ import {
   OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Socket, Server } from 'socket.io';
@@ -13,14 +14,22 @@ import { Socket, Server } from 'socket.io';
     origin: '*',
   },
 })
-export class AppGateway
+export class EventsGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   private readonly logger = new Logger('AppGateway');
 
-  @SubscribeMessage('message')
-  handleMessage(client: any, payload: any): string {
-    return 'Hello world!';
+  @WebSocketServer()
+  private readonly server: Server;
+
+  private connectedUsers: string[] = [];
+
+  @SubscribeMessage('mouse-move')
+  handleMessage(client: any, payload: any): void {
+    console.log(client.id, payload);
+    this.server
+      .except(client.id)
+      .emit('update-mouse-position', { client_id: client.id, ...payload });
   }
 
   afterInit(server: Server) {
@@ -29,9 +38,13 @@ export class AppGateway
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
+    this.connectedUsers.filter((elem: string) => elem !== client.id);
+    console.log(this.connectedUsers);
   }
 
   handleConnection(client: Socket, ...args: any[]) {
     this.logger.log(`Client connected: ${client.id}`);
+    this.connectedUsers.push(client.id);
+    console.log(this.connectedUsers);
   }
 }
