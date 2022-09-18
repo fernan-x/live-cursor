@@ -9,8 +9,8 @@ const socket = io("http://localhost:3001");
 
 function App() {
   let requestTimeout: number | undefined = undefined;
-  const [count, setCount] = useState(0);
-  const [isConnected, setIsConnected] = useState(socket.connected);
+  const [count, setCount] = useState<number>(0);
+  const [isConnected, setIsConnected] = useState<boolean>(socket.connected);
   const [ref, mousePosition] = useMousePosition();
 
   useEffect(() => {
