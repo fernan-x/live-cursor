@@ -38,7 +38,9 @@ export class EventsGateway
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
-    this.connectedUsers.filter((elem: string) => elem !== client.id);
+    this.connectedUsers = this.connectedUsers.filter(
+      (elem: string) => elem !== client.id,
+    );
     console.log(this.connectedUsers);
   }
 
