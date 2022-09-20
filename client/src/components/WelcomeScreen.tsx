@@ -11,9 +11,10 @@ const WelcomeScreen: React.FC = () => {
   const theme = useTheme();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    console.log(e);
-    //setUsername(value);
     e.preventDefault();
+    if (username !== "") {
+      setIsSubmit(true);
+    }
   };
 
   const handleChange = (
@@ -23,7 +24,7 @@ const WelcomeScreen: React.FC = () => {
   };
 
   return isSubmit ? (
-    <HomeScreen />
+    <HomeScreen username={username} />
   ) : (
     <Container
       sx={{
@@ -33,7 +34,14 @@ const WelcomeScreen: React.FC = () => {
         alignItems: "center",
       }}
     >
-      <Paper sx={{ padding: theme.spacing(2) }}>
+      <Paper
+        sx={{
+          padding: theme.spacing(2),
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
         <Player src={lottie} loop autoplay />
         <h2>Welcome to the live cursor application</h2>
         <Typography variant="subtitle1">
@@ -44,6 +52,7 @@ const WelcomeScreen: React.FC = () => {
             variant="outlined"
             label="Username"
             onChange={handleChange}
+            sx={{ margin: theme.spacing(2) }}
           />
         </form>
       </Paper>

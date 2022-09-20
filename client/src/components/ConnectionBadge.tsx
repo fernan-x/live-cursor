@@ -13,7 +13,7 @@ const ConnectionBadge: React.FC<ConnectionBadgeProps> = ({
       {isConnected ? (
         <Alert severity="success">You are connected</Alert>
       ) : (
-        <Alert severity="error">You are nt connected</Alert>
+        <Alert severity="error">You are not connected</Alert>
       )}
     </>
   );

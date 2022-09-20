@@ -1,47 +1,57 @@
 import React, { useState, useEffect } from "react";
-import io from "socket.io-client";
+import io, { Socket } from "socket.io-client";
 import { Paper } from "@mui/material";
 import useMousePosition from "../hooks/useMousePosition";
+import { DefaultEventsMap } from "@socket.io/component-emitter";
+import { CursorPosition, SocketUser } from "../types/types";
+import ConnectionBadge from "./ConnectionBadge";
+import Cursor from "./Cursor";
 
-const socket = io(
+interface HomeScreenProps {
+  username: string;
+}
+
+let socket: Socket<DefaultEventsMap, DefaultEventsMap> = io(
   import.meta.env.VITE_SERVER_URL + ":" + import.meta.env.VITE_SERVER_PORT
 );
 
-const HomeScreen: React.FC = () => {
+const HomeScreen: React.FC<HomeScreenProps> = ({
+  username,
+}: HomeScreenProps) => {
   let requestTimeout: number | undefined = undefined;
-  const [isConnected, setIsConnected] = useState<boolean>(socket.connected);
   const [ref, mousePosition] = useMousePosition();
+  const [connectedUsers, setConnectedUsers] = useState<SocketUser[]>([]);
 
   useEffect(() => {
-    socket.on("connect", () => {
-      console.log("connected");
-      setIsConnected(true);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("disconnected");
-      setIsConnected(false);
-    });
-
-    socket.on("update-mouse-position", (position) => {
+    socket.on("update-mouse-position", (updatedUser: SocketUser) => {
       console.log("Receive position from :");
-      console.log(position);
+      console.log(updatedUser);
+      let newUsers = connectedUsers;
+      newUsers = connectedUsers.filter(
+        (elem) => elem.client_id !== updatedUser.client_id
+      );
+      newUsers.push(updatedUser);
+      setConnectedUsers(newUsers);
     });
 
     return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("update-mouse-position");
+      if (socket) {
+        socket.off("connect");
+        socket.off("disconnect");
+        socket.off("update-mouse-position");
+      }
     };
   }, []);
 
   /**
    * Send the socket event to move mouse
    *
-   * @param {CursorPosition}  mousePosition     Mouse position
+   * @param {SocketUser}  socketUser     Socket user with new mouse position
    */
-  const emitCursorPosition = (mousePosition: CursorPosition): void => {
-    socket.emit("mouse-move", mousePosition);
+  const emitCursorPosition = (socketUser: SocketUser): void => {
+    if (socket && socket.connected) {
+      socket.emit("mouse-move", socketUser);
+    }
   };
 
   useEffect(() => {
@@ -49,13 +59,22 @@ const HomeScreen: React.FC = () => {
       console.log(
         `Emit position => left : ${mousePosition.left}, top : ${mousePosition.top}`
       );
-      emitCursorPosition(mousePosition);
-    }, 300);
+      emitCursorPosition({ name: username, position: mousePosition });
+    }, 300); // We can play on the ms time to have a better animation
 
     return () => clearTimeout(requestTimeout);
   }, [mousePosition]);
 
-  return <Paper ref={ref}>This is the homescreen</Paper>;
+  return (
+    <Paper ref={ref} sx={{ width: "100%", height: "100%" }}>
+      <>
+        <ConnectionBadge isConnected={socket.connected} />
+        {connectedUsers.map((element: SocketUser) => (
+          <Cursor socketUser={element} key={element.client_id} />
+        ))}
+      </>
+    </Paper>
+  );
 };
 
 export default HomeScreen;
