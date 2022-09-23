@@ -3,7 +3,7 @@ import io, { Socket } from "socket.io-client";
 import { Paper } from "@mui/material";
 import useMousePosition from "../hooks/useMousePosition";
 import { DefaultEventsMap } from "@socket.io/component-emitter";
-import { CursorPosition, SocketUser } from "../types/types";
+import { SocketUser } from "../types/types";
 import ConnectionBadge from "./ConnectionBadge";
 import Cursor from "./Cursor";
 
@@ -24,8 +24,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
   useEffect(() => {
     socket.on("update-mouse-position", (updatedUser: SocketUser) => {
-      console.log("Receive position from :");
-      console.log(updatedUser);
       let newUsers = connectedUsers;
       newUsers = connectedUsers.filter(
         (elem) => elem.client_id !== updatedUser.client_id
@@ -36,8 +34,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
     return () => {
       if (socket) {
-        socket.off("connect");
-        socket.off("disconnect");
         socket.off("update-mouse-position");
       }
     };
@@ -56,11 +52,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
   useEffect(() => {
     requestTimeout = setTimeout(() => {
-      console.log(
-        `Emit position => left : ${mousePosition.left}, top : ${mousePosition.top}`
-      );
       emitCursorPosition({ name: username, position: mousePosition });
-    }, 300); // We can play on the ms time to have a better animation
+    }, 10); // We can play on the ms time to have a better animation
 
     return () => clearTimeout(requestTimeout);
   }, [mousePosition]);
